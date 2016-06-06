@@ -24,7 +24,7 @@ This helps with a few important things:
 * improves user-experience and reduces network traffic by avoiding repeated requests for the same data
 * lets you make full use of the promise API for monitoring operations
 
-We're also solving for one more detail: in the handler method we use in reducers, we're not only caching the promise so you can chain it, we're also providing an indication of the status of the operation which you can inspect synchronously. (Somehow, the ability to do this was left entirely out of the ES6 promise spec, so it needs to be added.)
+We're also solving for one more detail: in the handler method we use in reducers, we're not only caching the promise so you can chain it, we're also providing an indication of the status of the operation which you can inspect synchronously. (Somehow, the ability to do this was left entirely out of the ES6 promise spec, so it needs to be added. Note that if you use a library like Bluebird in lieu of native promises, you not solve this particular problem, but you also gain better performance, better error-handling, et al. Bluebird should be fully compatible with this library.)
 
 ## Usage
 
@@ -39,7 +39,7 @@ If it receives an Flux Standard Action whose `payload` is a promise, it will
 Then, on a change in the state of the promise, it will either: 
 
 - dispatch a copy of the action with the resolved value of the promise, and set `status` to `success`.
-- dispatch a copy of the action with the rejected value of the promise, and set `status` to `error`.
+- dispatch a copy of the action with the rejected value of the promise, and set `error` property to `true`.
 
 The middleware returns a promise to the caller so that it can wait for the operation to finish before continuing. This is especially useful for server-side rendering. If you find that a promise is not being returned, ensure that all middleware before it in the chain is also returning its `next()` call to the caller.
 
@@ -59,7 +59,7 @@ createAction('FETCH_THING', async id => {
 
 ### Example: Integrating with a web API module
 
-Say you have an API module that sends requests to a server. This is a common pattern in Flux apps. Assuming your module supports promises, it's really easy to create action creators that wrap around your API:
+Say you have an API module that sends requests to a server. This is a common pattern in Flux apps. Assuming your API module produces promises, it's really easy to make some action creators that wrap around it:
 
 ```js
 import { WebAPI } from '../utils/WebAPI';
@@ -70,4 +70,8 @@ export const updateThing = createAction('UPDATE_THING', WebAPI.updateThing);
 export const deleteThing = createAction('DELETE_THING', WebAPI.deleteThing);
 ```
 
-(You'll probably notice how this could be simplified this even further using something like lodash's `mapValues()`.)
+(This could be simplified into a single expression using something like lodash's `mapValues()`.)
+
+## Requirements
+redux-promise and redux-promise-keeper both assume your system supports ES6.
+
