@@ -11,17 +11,16 @@ export default function promiseMiddleware({ dispatch }) {
     // If the action isn't FSA-compliant, we provide minimal handling.
     // Should we, or should we just pass it???
     if (!isFSA(action)) {
-      // is it at least minimally compliant with the promise spec? 
+      // Is the whole action a promise? 
       return isPromise(action)
-        /*  If so, wait for it to resolve/settle, then dispatch the result.
-            WHY??? 
+        /*  
+            If so, wait for it to resolve/settle, then dispatch the result.
+            But, WHY??? 
             Why would we want to unwrap and dispatch a result
             we weren't asked to handle (as it's not FSA-compliant)? 
-            We're not even passing along the type, if it exists...
-            Would at least passing along FSA properties be a more reasonable failure mode?
             Perhaps throwing an error to indicate the problem? Otherwise, we're
             silently swallowing something people may want...
-            perhaps even better just to pass it along untouched?
+            And pass it along untouched?
             If nothing else, needs better documentation, for least-surprise. 
         */
         ? action.then(dispatch)
@@ -30,27 +29,37 @@ export default function promiseMiddleware({ dispatch }) {
     }
 
     // Here's where the real action happens:
-    return isPromise(action.payload)
+    if (isPromise(action.payload)) {
       /*  If the action is an FSA, and the *payload prop* is a promise,
+          we do two things:
+          1.  We pass along the promise with next(),
+              so the promise can be cached or used elsewhere.
+              But, we must move it to meta, so it doesn't trigger 
+              a race-condition here. 
+              NOTE: this means action-handlers must be able to parse
+              the different payloads: meta vs. settled values
+          2.  We await the promise and dispatch outcome
       */
-      ? action.payload.then(
-          // wait for resolve/reject, then unwrap and dispatch either:
-          // If resolved:
-          result => {
-            dispatch({ ...action, payload: result });
-            // Shouldn't we also be returning the resolved promise here,
-            // as we do when rejected? ex.,
-            // return Promise.resolve(result);
-          },
-          // If rejected: 
-          error => {
-            dispatch({ ...action, payload: error, error: true });
-            // In this case, middleware also returns a rejected promise.
-            // Received by call-site?
-            return Promise.reject(error);
-          }
-        )
+      next({
+        type: action.type, 
+        meta: {promise: action.payload} 
+      });
+      return action.payload.then(
+        // Wait for resolve/reject, then unwrap, return, and dispatch:
+        // If resolved:
+        result => {
+          dispatch({ ...action, payload: result });
+          return result;
+        },
+        // If rejected: 
+        error => {
+          dispatch({ ...action, payload: error, error: true });
+          return error;
+        }
+      )
+    } else {
       // otherwise, it's an FSA-compliant action, but not our concern. Pass.
-      : next(action);
+      return next(action);
+    }
   };
 }

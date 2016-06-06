@@ -1,10 +1,10 @@
-redux-promise
-=============
+redux-promise-keeper
+====================
 
 <!-- [![build status](https://img.shields.io/travis/acdlite/redux-promise/master.svg?style=flat-square)](https://travis-ci.org/acdlite/redux-promise)
 [![npm version](https://img.shields.io/npm/v/redux-promise.svg?style=flat-square)](https://www.npmjs.com/package/redux-promise) -->
 
-[FSA](https://github.com/acdlite/flux-standard-action)-compliant promise [middleware](https://github.com/gaearon/redux/blob/master/docs/middleware.md) for Redux. Forked from the estimable [acdlite](https://github.com/acdlite/) in order to add new features and evolve the pattern...
+[Redux middleware](https://github.com/gaearon/redux/blob/master/docs/middleware.md) for handling promises in [FSA](https://github.com/acdlite/flux-standard-action)-compliant actions. Forked from the estimable [acdlite](https://github.com/acdlite/) in order to add new features and evolve the pattern...
 
 ```js
 npm install --save git+https://git@github.com/xml/redux-promise-keeper.git
